@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include "iostream"
 #include <unistd.h>
 #include <cerrno>
 #include "vector"
@@ -40,13 +41,14 @@
                             }                               \
                         } while (0)
 
-#define SHUT_FD2 do {                                \
-                            if (fd2 >= 0) {                 \
-                                shutdown(fd2, SHUT_RDWR);   \
-                                close(fd2);                 \
-                                fd2 = -1;                   \
-                            }                               \
-                        } while (0)
+#define SHUT_CFDS for(int i=0;i<max_clients;i++) { \
+                        int sd = client_sockets[i];\
+                        if(sd >= 0) {              \
+                            shutdown(sd, SHUT_RDWR); \
+                            close(sd);             \
+                            client_sockets[i] = -1;                           \
+                        }                          \
+                        }                          \
 
 static int listen_socket(int listen_port, struct sockaddr_in& address)
 {
@@ -92,13 +94,16 @@ int main(int argc, char const* argv[])
     int addrlen1 = sizeof(address1);
     int addrlen2 = sizeof(address2);
     bool flag1 = false;
-    bool flag2 = false;
     // 接收传感器数据
     server_fd1 = listen_socket(DATA_PORT, address1);
     // 接收平台指令
     server_fd2 = listen_socket(CONTROL_PORT, address2);
     int fd1 = 0;
-    int fd2 = 0;
+    int client_sockets[15];
+    int max_clients = 15;
+    for(int i=0;i<15;i++) {
+        client_sockets[i] = 0;
+    }
     if(server_fd1 == -1 || server_fd2 == -1) {
         exit(EXIT_FAILURE);
     }
@@ -106,8 +111,6 @@ int main(int argc, char const* argv[])
         char buffer[158] = { 0 };
         int r;
         fd_set rd, wr, er;
-        // 用位图来表示当前运行的算法，0表示没有算法在运行，1<<1 表示1号算法，1<<2表示2号算法
-        int algo = 0;
 
         FD_ZERO(&rd);
         FD_ZERO(&wr);
@@ -115,9 +118,13 @@ int main(int argc, char const* argv[])
         FD_SET(server_fd1, &rd);
         FD_SET(server_fd2, &rd);
         if(flag1) FD_SET(fd1, &rd);
-        if(flag2) FD_SET(fd2, &rd);
-        // 获取nfds的值。并把fd1,fd2分别加入到，可读，可写，异常监视集合中去。
-        r = select(max(server_fd1, max(server_fd2, max(fd1, fd2))) + 1, &rd, &wr, &er, NULL);
+        int max_sd = max(server_fd1, max(server_fd2, fd1));
+        for(int i=0;i<max_clients;i++) {
+            int sd = client_sockets[i];
+            if(sd > 0) FD_SET(sd, &rd);
+            max_sd = max(max_sd, sd);
+        }
+        r = select(max_sd + 1, &rd, &wr, &er, NULL);
         if (r == -1 && errno == EINTR) {
             continue;
         }
@@ -134,36 +141,85 @@ int main(int argc, char const* argv[])
             }
             flag1 = true;
         }
-        if(FD_ISSET(server_fd2, &rd) && !flag2) {
-            if ((fd2 = accept(server_fd2,
+        if(FD_ISSET(server_fd2, &rd)) {
+            int new_socket;
+            if ((new_socket = accept(server_fd2,
                               (struct sockaddr *)&address2, (socklen_t*)&addrlen2))<0)
             {
                 perror("accept");
                 exit(EXIT_FAILURE);
             }
-            flag2 = true;
+            for(int i=0;i<max_clients;i++) {
+                if(client_sockets[i] == 0) {
+                    client_sockets[i] = new_socket;
+                    std::cout << "new connection" << std::endl;
+                    break;
+                }
+            }
         }
         if(FD_ISSET(fd1, &rd)) {
-            algo = 1;
             int varread = recv(fd1, buffer, 158, 0);
-            if(varread <= 0 || algo == 0) continue;
+            if(varread <= 0) continue;
             printf("%s\n", buffer);
             std::vector<double> data;
             data.push_back((double)covert2Int(buffer, 2, 10) / 10); // 土壤传感器数据
-            data.push_back((double) covert2Int(buffer, 10, 18))
+            data.push_back((double) covert2Int(buffer, 10, 18) / 10); //多功能传感器的温度
+            data.push_back((double) covert2Int(buffer, 18, 26) / 10); //多功能传感器的湿度
+            data.push_back((double) covert2Int(buffer, 26, 34) / 10); //多功能传感器的粉尘
+            data.push_back((double) covert2Int(buffer, 34, 42) / 10); //多功能传感器的VOC
+            data.push_back((double) covert2Int(buffer, 42, 50) / 10); //多功能传感器的硫化氢
+            data.push_back((double) covert2Int(buffer, 50, 58) / 10); //多功能传感器的氨气
+            data.push_back((double) covert2Int(buffer, 58, 66) / 10); //多功能传感器的甲醛
+            data.push_back((double) covert2Int(buffer, 66, 74) / 10); //多功能传感器的甲烷
+            data.push_back((double) covert2Int(buffer, 74, 82) / 10); //多功能传感器的氧气
+            data.push_back((double) (covert2Int(buffer, 82, 90) - 2000) / 100); //环境变送器温度
+            data.push_back((double) covert2Int(buffer, 90, 98) / 100); //环境变送器湿度
+            data.push_back((double) covert2Int(buffer, 98, 106) * 10); //环境变送器大气压
+            data.push_back((double) covert2Int(buffer, 106, 114) / 10); //co2传感器浓度
+            data.push_back((double) covert2Int(buffer, 114, 122) / 100); //风速传感器
+            data.push_back((double) covert2Int(buffer, 122, 130) * 5 / 2000); //液位传感器
+            data.push_back((double) covert2Int(buffer, 130, 138) * 1.6 / 2000); //液压传感器
+            data.push_back((double) covert2Int(buffer, 138, 154)); // 时间戳
         }
-        if(FD_ISSET(fd2, &rd)) {
-            // todo 平台控制逻辑
-            int varread = recv(fd2, buffer, 79, 0);
-            if(varread <= 0) continue;
-            if(strcmp(buffer, "exit") == 0) {
-                SHUT_SFD1;
-                SHUT_SFD2;
-                SHUT_FD1;
-                SHUT_FD2;
-                break;
+        for(int i=0;i<max_clients;i++) {
+            int sd = client_sockets[i];
+            if(FD_ISSET(sd, &rd)) {
+                // todo 平台控制逻辑
+                int varread = recv(sd, buffer, 79, 0);
+                if(varread <= 0) continue;
+                if(strcmp(buffer, "FML-A") == 0) {
+
+                } else if(strcmp(buffer, "FML-B") == 0) {
+
+                } else if(strcmp(buffer, "FML-C") == 0) {
+
+                } else if(strcmp(buffer, "INC-A") == 0) {
+
+                } else if(strcmp(buffer, "INC-B") == 0) {
+
+                } else if(strcmp(buffer, "INC-C") == 0) {
+
+                } else if(strcmp(buffer, "INC-D") == 0) {
+
+                } else if(strcmp(buffer, "ND-A") == 0) {
+
+                } else if(strcmp(buffer, "ND-B") == 0) {
+
+                } else if(strcmp(buffer, "ND-C") == 0) {
+
+                } else if(strcmp(buffer, "ND-D") == 0) {
+
+                }
+                printf("%s\n", buffer);
             }
-            printf("%s\n", buffer);
         }
     }
 }
+
+//if(strcmp(buffer, "exit") == 0) {
+//SHUT_SFD1;
+//SHUT_SFD2;
+//SHUT_FD1;
+//SHUT_CFDS;
+//return 0;
+//}
