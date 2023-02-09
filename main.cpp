@@ -7,6 +7,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <cerrno>
+#include "vector"
+#include "utils.h"
 
 #define DATA_PORT 8080
 #define CONTROL_PORT 8081
@@ -91,7 +93,9 @@ int main(int argc, char const* argv[])
     int addrlen2 = sizeof(address2);
     bool flag1 = false;
     bool flag2 = false;
+    // 接收传感器数据
     server_fd1 = listen_socket(DATA_PORT, address1);
+    // 接收平台指令
     server_fd2 = listen_socket(CONTROL_PORT, address2);
     int fd1 = 0;
     int fd2 = 0;
@@ -99,9 +103,11 @@ int main(int argc, char const* argv[])
         exit(EXIT_FAILURE);
     }
     for(;;) {
-        char buffer[79] = { 0 };
+        char buffer[158] = { 0 };
         int r;
         fd_set rd, wr, er;
+        // 用位图来表示当前运行的算法，0表示没有算法在运行，1<<1 表示1号算法，1<<2表示2号算法
+        int algo = 0;
 
         FD_ZERO(&rd);
         FD_ZERO(&wr);
@@ -138,13 +144,17 @@ int main(int argc, char const* argv[])
             flag2 = true;
         }
         if(FD_ISSET(fd1, &rd)) {
-            int varread = read(fd1, buffer, 79);
-            if(varread <= 0) continue;
+            algo = 1;
+            int varread = recv(fd1, buffer, 158, 0);
+            if(varread <= 0 || algo == 0) continue;
             printf("%s\n", buffer);
+            std::vector<double> data;
+            data.push_back((double)covert2Int(buffer, 2, 10) / 10); // 土壤传感器数据
+            data.push_back((double) covert2Int(buffer, 10, 18))
         }
         if(FD_ISSET(fd2, &rd)) {
             // todo 平台控制逻辑
-            int varread = read(fd2, buffer, 79);
+            int varread = recv(fd2, buffer, 79, 0);
             if(varread <= 0) continue;
             if(strcmp(buffer, "exit") == 0) {
                 SHUT_SFD1;

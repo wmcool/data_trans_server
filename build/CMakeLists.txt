@@ -3,4 +3,4 @@ project(server)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(server ../main.cpp)
+add_executable(server ../main.cpp ../utils.cpp ../utils.h)
