@@ -12,6 +12,7 @@ int covert2Int(const char* buffer, int i, int j) {
     ss << std::hex << numStr;
     int res = 0;
     ss >> res;
+    delete numStr;
     return res;
 }
 

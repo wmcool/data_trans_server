@@ -8,8 +8,10 @@
 #include "iostream"
 #include <unistd.h>
 #include <cerrno>
+#include <sstream>
 #include "vector"
-#include "utils.h"
+#include "include/utils.h"
+#include "include/mysocket.h"
 
 #define DATA_PORT 8080
 #define CONTROL_PORT 8081
@@ -41,6 +43,14 @@
                             }                               \
                         } while (0)
 
+#define SHUT_FD do {                                \
+                            if (send_fd >= 0) {                 \
+                                shutdown(send_fd, SHUT_RDWR);   \
+                                close(send_fd);                 \
+                                send_fd = -1;                   \
+                            }                               \
+                        } while (0)
+
 #define SHUT_CFDS for(int i=0;i<max_clients;i++) { \
                         int sd = client_sockets[i];\
                         if(sd >= 0) {              \
@@ -52,9 +62,8 @@
 
 static int listen_socket(int listen_port, struct sockaddr_in& address)
 {
-    int server_fd, new_socket, valread;
+    int server_fd;
     int opt = 1;
-    int addrlen = sizeof(address);
 
     // Creating socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -91,6 +100,7 @@ int main(int argc, char const* argv[])
 {
     int server_fd1, server_fd2;
     struct sockaddr_in address1, address2;
+    int send_fd = init_socket();
     int addrlen1 = sizeof(address1);
     int addrlen2 = sizeof(address2);
     bool flag1 = false;
@@ -109,7 +119,8 @@ int main(int argc, char const* argv[])
     }
     for(;;) {
         char buffer[158] = { 0 };
-        int r;
+//        char buffer[159] = "00000000EF000000E800000174000000170000010E0000000000000000000000000000000000000000000001B7000001440000040600000E5800000000000000000000000000000186301DF8D47FAA";
+        int r = 0;
         fd_set rd, wr, er;
 
         FD_ZERO(&rd);
@@ -162,7 +173,8 @@ int main(int argc, char const* argv[])
             if(varread <= 0) continue;
             printf("%s\n", buffer);
             std::vector<double> data;
-            data.push_back((double)covert2Int(buffer, 2, 10) / 10); // 土壤传感器数据
+            data.push_back((double) covert2Int(buffer, 138, 154)); // 时间戳
+            data.push_back((double) covert2Int(buffer, 2, 10) / 10); // 土壤传感器数据
             data.push_back((double) covert2Int(buffer, 10, 18) / 10); //多功能传感器的温度
             data.push_back((double) covert2Int(buffer, 18, 26) / 10); //多功能传感器的湿度
             data.push_back((double) covert2Int(buffer, 26, 34) / 10); //多功能传感器的粉尘
@@ -179,7 +191,17 @@ int main(int argc, char const* argv[])
             data.push_back((double) covert2Int(buffer, 114, 122) / 100); //风速传感器
             data.push_back((double) covert2Int(buffer, 122, 130) * 5 / 2000); //液位传感器
             data.push_back((double) covert2Int(buffer, 130, 138) * 1.6 / 2000); //液压传感器
-            data.push_back((double) covert2Int(buffer, 138, 154)); // 时间戳
+            std::stringstream ss;
+            for(int i=0;i<data.size();i++) {
+                ss << data[i];
+                if(i != data.size() - 1) {
+                    ss << ",";
+                }
+            }
+            ss << "\n";
+            std::string s = ss.str();
+            std::cout << s;
+            send(send_fd, s.c_str(), s.size(), 0);
         }
         for(int i=0;i<max_clients;i++) {
             int sd = client_sockets[i];
@@ -202,24 +224,24 @@ int main(int argc, char const* argv[])
                 } else if(strcmp(buffer, "INC-D") == 0) {
 
                 } else if(strcmp(buffer, "ND-A") == 0) {
-
+                    system("../../../cpod_c/cpod/build/cmake-build-debug/cpod.exe -R 1.9 -W 10000 -K 50 -S 500 --num_window=100 -f ../../../cpod_c/cpod/build/cmake-build-debug/tao.txt");
                 } else if(strcmp(buffer, "ND-B") == 0) {
-
+                    system("../../../cpod_c/cpod/build/cmake-build-debug/cpod.exe -R 1.9 -W 10000 -K 50 -S 500 --num_window=100 -f ../../../cpod_c/cpod/build/cmake-build-debug/tao.txt");
                 } else if(strcmp(buffer, "ND-C") == 0) {
 
                 } else if(strcmp(buffer, "ND-D") == 0) {
 
+                } else if(strcmp(buffer, "exit") == 0) {
+                    SHUT_SFD1;
+                    SHUT_SFD2;
+                    SHUT_FD1;
+                    SHUT_CFDS;
+                    SHUT_FD;
+                    return 0;
                 }
                 printf("%s\n", buffer);
             }
         }
+        sleep(1);
     }
 }
-
-//if(strcmp(buffer, "exit") == 0) {
-//SHUT_SFD1;
-//SHUT_SFD2;
-//SHUT_FD1;
-//SHUT_CFDS;
-//return 0;
-//}
