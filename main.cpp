@@ -43,6 +43,14 @@
                             }                               \
                         } while (0)
 
+#define SHUT_FD2 do {                                \
+                            if (fd2 >= 0) {                 \
+                                shutdown(fd2, SHUT_RDWR);   \
+                                close(fd2);                 \
+                                fd2 = -1;                   \
+                            }                               \
+                        } while (0)
+
 #define SHUT_FD do {                                \
                             if (send_fd >= 0) {                 \
                                 shutdown(send_fd, SHUT_RDWR);   \
@@ -100,26 +108,29 @@ int main(int argc, char const* argv[])
 {
     int server_fd1, server_fd2;
     struct sockaddr_in address1, address2;
-    int send_fd = init_socket();
+//    int send_fd = init_socket();
     int addrlen1 = sizeof(address1);
     int addrlen2 = sizeof(address2);
     bool flag1 = false;
+    bool flag2 = false;
     // 接收传感器数据
     server_fd1 = listen_socket(DATA_PORT, address1);
     // 接收平台指令
     server_fd2 = listen_socket(CONTROL_PORT, address2);
     int fd1 = 0;
-    int client_sockets[15];
-    int max_clients = 15;
-    for(int i=0;i<15;i++) {
-        client_sockets[i] = 0;
-    }
+    int fd2 = 0;
+//    int client_sockets[15];
+//    int max_clients = 15;
+//    for(int i=0;i<15;i++) {
+//        client_sockets[i] = 0;
+//    }
     if(server_fd1 == -1 || server_fd2 == -1) {
         exit(EXIT_FAILURE);
     }
     for(;;) {
         char buffer[158] = { 0 };
-//        char buffer[159] = "00000000EF000000E800000174000000170000010E0000000000000000000000000000000000000000000001B7000001440000040600000E5800000000000000000000000000000186301DF8D47FAA";
+        char control[40] = { 0 };
+//        char buffer[159] = "00000000C5000000C20000015A0000002200000B7C000000000000000000000000000000000000000000000F8DO0000BDA00002812000008ED000000000000000000000000000001863447D7F71BAA";
         int r = 0;
         fd_set rd, wr, er;
 
@@ -128,13 +139,17 @@ int main(int argc, char const* argv[])
         FD_ZERO(&er);
         FD_SET(server_fd1, &rd);
         FD_SET(server_fd2, &rd);
-        if(flag1) FD_SET(fd1, &rd);
-        int max_sd = max(server_fd1, max(server_fd2, fd1));
-        for(int i=0;i<max_clients;i++) {
-            int sd = client_sockets[i];
-            if(sd > 0) FD_SET(sd, &rd);
-            max_sd = max(max_sd, sd);
-        }
+        if(flag1)
+            FD_SET(fd1, &rd);
+        if(flag2)
+            FD_SET(fd2, &rd);
+
+        int max_sd = max(server_fd1, max(server_fd2, max(fd1, fd2)));
+//        for(int i=0;i<max_clients;i++) {
+//            int sd = client_sockets[i];
+//            if(sd > 0) FD_SET(sd, &rd);
+//            max_sd = max(max_sd, sd);
+//        }
         r = select(max_sd + 1, &rd, &wr, &er, NULL);
         if (r == -1 && errno == EINTR) {
             continue;
@@ -160,13 +175,15 @@ int main(int argc, char const* argv[])
                 perror("accept");
                 exit(EXIT_FAILURE);
             }
-            for(int i=0;i<max_clients;i++) {
-                if(client_sockets[i] == 0) {
-                    client_sockets[i] = new_socket;
-                    std::cout << "new connection" << std::endl;
-                    break;
-                }
-            }
+            fd2 = new_socket;
+//            for(int i=0;i<max_clients;i++) {
+//                if(client_sockets[i] == 0) {
+//                    client_sockets[i] = new_socket;
+//                    std::cout << "new connection" << std::endl;
+//                    break;
+//                }
+//            }
+            flag2 = true;
         }
         if(FD_ISSET(fd1, &rd)) {
             int varread = recv(fd1, buffer, 158, 0);
@@ -201,46 +218,51 @@ int main(int argc, char const* argv[])
             ss << "\n";
             std::string s = ss.str();
             std::cout << s;
-            send(send_fd, s.c_str(), s.size(), 0);
+//            send(send_fd, s.c_str(), s.size(), 0);
         }
-        for(int i=0;i<max_clients;i++) {
-            int sd = client_sockets[i];
-            if(FD_ISSET(sd, &rd)) {
+//        for(int i=0;i<max_clients;i++) {
+//            int sd = client_sockets[i];
+            if(FD_ISSET(fd2, &rd)) {
                 // todo 平台控制逻辑
-                int varread = recv(sd, buffer, 79, 0);
+                int varread = recv(fd2, control, 40, 0);
                 if(varread <= 0) continue;
-                if(strcmp(buffer, "FML-A") == 0) {
+                if(strcmp(control, "FML-A") == 0) {
+                    std::cout << "running FML-A.." << std::endl;
+                } else if(strcmp(control, "FML-B") == 0) {
 
-                } else if(strcmp(buffer, "FML-B") == 0) {
+                } else if(strcmp(control, "FML-C") == 0) {
 
-                } else if(strcmp(buffer, "FML-C") == 0) {
+                } else if(strcmp(control, "INC-A") == 0) {
 
-                } else if(strcmp(buffer, "INC-A") == 0) {
+                } else if(strcmp(control, "INC-B") == 0) {
 
-                } else if(strcmp(buffer, "INC-B") == 0) {
+                } else if(strcmp(control, "INC-C") == 0) {
 
-                } else if(strcmp(buffer, "INC-C") == 0) {
+                } else if(strcmp(control, "INC-D") == 0) {
 
-                } else if(strcmp(buffer, "INC-D") == 0) {
+                } else if(strcmp(control, "ND-A") == 0) {
+                    int pid = fork();
+                    if(pid == 0) {
+                        execl("../../../cpod_c/cpod/build/cmake-build-debug/cpod.exe", "-R", "1.9", "-W", "10000", "-K", "50", "-S", "500", "--num_window=100", "-f", "../../../cpod_c/cpod/build/cmake-build-debug/tao.txt", NULL);
+                        return 0;
+                    }
+                } else if(strcmp(control, "ND-B") == 0) {
 
-                } else if(strcmp(buffer, "ND-A") == 0) {
-                    system("../../../cpod_c/cpod/build/cmake-build-debug/cpod.exe -R 1.9 -W 10000 -K 50 -S 500 --num_window=100 -f ../../../cpod_c/cpod/build/cmake-build-debug/tao.txt");
-                } else if(strcmp(buffer, "ND-B") == 0) {
-                    system("../../../cpod_c/cpod/build/cmake-build-debug/cpod.exe -R 1.9 -W 10000 -K 50 -S 500 --num_window=100 -f ../../../cpod_c/cpod/build/cmake-build-debug/tao.txt");
-                } else if(strcmp(buffer, "ND-C") == 0) {
+                } else if(strcmp(control, "ND-C") == 0) {
 
-                } else if(strcmp(buffer, "ND-D") == 0) {
+                } else if(strcmp(control, "ND-D") == 0) {
 
-                } else if(strcmp(buffer, "exit") == 0) {
+                } else if(strcmp(control, "exit") == 0) {
                     SHUT_SFD1;
                     SHUT_SFD2;
                     SHUT_FD1;
-                    SHUT_CFDS;
-                    SHUT_FD;
+                    SHUT_FD2;
+//                    SHUT_CFDS;
+//                    SHUT_FD;
                     return 0;
                 }
-                printf("%s\n", buffer);
-            }
+                printf("%s\n", control);
+//            }
         }
         sleep(1);
     }
