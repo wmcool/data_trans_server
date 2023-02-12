@@ -256,13 +256,61 @@ int main(int argc, char const* argv[])
                 if(strcmp(control, "FML-A") == 0) {
                     std::cout << "running FML-A.." << std::endl;
                 } else if(strcmp(control, "FML-B") == 0) {
-
+                    // 管道操作
+                    if((mkfifo("/tmp/fmlb",O_CREAT|O_EXCL)<0)&&(errno!=EEXIST)){
+                        printf("cannot create fifo\n");
+                        return 0;
+                    }
+                    if(errno==ENXIO) {
+                        printf("open error; no reading process\n");
+                        return 0;
+                    }
+                    int pipe_fd = open("/tmp/fmlb",O_WRONLY,0);
+                    if(pipe_fd <= 0) {
+                        printf("open fifo failed");
+                        break;
+                    }
+                    for(int i=0;i<NUM_ALGO;i++) {
+                        if(pipe_fds[i] == 0) {
+                            pipe_fds[i] = pipe_fd;
+                            break;
+                        }
+                    }
+                    int pid = fork();
+                    if(pid == 0) {
+                        execl("fmlb/api", "-h", "0", NULL);
+                        return 0;
+                    }
                 } else if(strcmp(control, "FML-C") == 0) {
 
                 } else if(strcmp(control, "INC-A") == 0) {
 
                 } else if(strcmp(control, "INC-B") == 0) {
-
+                    // 管道操作
+                    if((mkfifo("/tmp/incb",O_CREAT|O_EXCL)<0)&&(errno!=EEXIST)){
+                        printf("cannot create fifo\n");
+                        return 0;
+                    }
+                    if(errno==ENXIO) {
+                        printf("open error; no reading process\n");
+                        return 0;
+                    }
+                    int pipe_fd = open("/tmp/incb",O_WRONLY,0);
+                    if(pipe_fd <= 0) {
+                        printf("open fifo failed");
+                        break;
+                    }
+                    for(int i=0;i<NUM_ALGO;i++) {
+                        if(pipe_fds[i] == 0) {
+                            pipe_fds[i] = pipe_fd;
+                            break;
+                        }
+                    }
+                    int pid = fork();
+                    if(pid == 0) {
+                        execl("incb/xxx", NULL);
+                        return 0;
+                    }
                 } else if(strcmp(control, "INC-C") == 0) {
 
                 } else if(strcmp(control, "INC-D") == 0) {
@@ -290,7 +338,7 @@ int main(int argc, char const* argv[])
                     }
                     int pid = fork();
                     if(pid == 0) {
-                        execl("cpod/cpod", "-R", "1.9", "-W", "10000", "-K", "50", "-S", "500", "--num_window=100", "-f", "cpod/tao.txt", NULL);
+                        execl("nda/cpod", "-R", "1.9", "-W", "10000", "-K", "50", "-S", "500", "--num_window=100", "-f", "cpod/tao.txt", NULL);
                         return 0;
                     }
                 } else if(strcmp(control, "ND-B") == 0) {
