@@ -9,12 +9,14 @@
 #include <unistd.h>
 #include <cerrno>
 #include <sstream>
+#include <sys/fcntl.h>
 #include "vector"
 #include "include/utils.h"
 #include "include/mysocket.h"
 
 #define DATA_PORT 8080
 #define CONTROL_PORT 8081
+#define NUM_ALGO 15
 
 #undef max
 #define max(x,y) ((x) > (y) ? (x) : (y))
@@ -111,6 +113,10 @@ int main(int argc, char const* argv[])
 //    int send_fd = init_socket();
     int addrlen1 = sizeof(address1);
     int addrlen2 = sizeof(address2);
+    int pipe_fds[NUM_ALGO];
+    for(int i=0;i<NUM_ALGO;i++) {
+        pipe_fds[i] = 0;
+    }
     bool flag1 = false;
     bool flag2 = false;
     // 接收传感器数据
@@ -127,10 +133,25 @@ int main(int argc, char const* argv[])
     if(server_fd1 == -1 || server_fd2 == -1) {
         exit(EXIT_FAILURE);
     }
+
+    // 管道操作
+//    if((mkfifo("../../../NDA",O_CREAT|O_EXCL)<0)&&(errno!=EEXIST))
+//        printf("cannot create fifo\n");
+//    if(errno==ENXIO)
+//        printf("open error; no reading process\n");
+//    int fifo_fd = 0;
+//    fifo_fd = open("../../NDA",O_WRONLY|O_NONBLOCK,0);
+//    if(fifo_fd <= 0)
+//        printf("open fifo failed");
+
     for(;;) {
-        char buffer[158] = { 0 };
+//        char buffer[158] = { 0 };
         char control[40] = { 0 };
-//        char buffer[159] = "00000000C5000000C20000015A0000002200000B7C000000000000000000000000000000000000000000000F8DO0000BDA00002812000008ED000000000000000000000000000001863447D7F71BAA";
+        bool algos[NUM_ALGO];
+        for(int i=0;i<NUM_ALGO;i++) {
+            algos[i] = false;
+        }
+        char buffer[159] = "00000000C5000000C20000015A0000002200000B7C000000000000000000000000000000000000000000000F8DO0000BDA00002812000008ED000000000000000000000000000001863447D7F71BAA";
         int r = 0;
         fd_set rd, wr, er;
 
@@ -186,8 +207,8 @@ int main(int argc, char const* argv[])
             flag2 = true;
         }
         if(FD_ISSET(fd1, &rd)) {
-            int varread = recv(fd1, buffer, 158, 0);
-            if(varread <= 0) continue;
+//            int varread = recv(fd1, buffer, 158, 0);
+//            if(varread <= 0) continue;
             printf("%s\n", buffer);
             std::vector<double> data;
             data.push_back((double) covert2Int(buffer, 138, 154)); // 时间戳
@@ -218,6 +239,12 @@ int main(int argc, char const* argv[])
             ss << "\n";
             std::string s = ss.str();
             std::cout << s;
+            for(int i=0;i<NUM_ALGO;i++) {
+                if(pipe_fds[i] != 0) {
+                    write(pipe_fds[i], s.c_str(), s.size());
+                }
+            }
+//            write(fifo_fd, s.c_str(), s.size());
 //            send(send_fd, s.c_str(), s.size(), 0);
         }
 //        for(int i=0;i<max_clients;i++) {
@@ -241,9 +268,29 @@ int main(int argc, char const* argv[])
                 } else if(strcmp(control, "INC-D") == 0) {
 
                 } else if(strcmp(control, "ND-A") == 0) {
+                    // 管道操作
+                    if((mkfifo("/tmp/nda",O_CREAT|O_EXCL)<0)&&(errno!=EEXIST)){
+                        printf("cannot create fifo\n");
+                        return 0;
+                    }
+                    if(errno==ENXIO) {
+                        printf("open error; no reading process\n");
+                        return 0;
+                    }
+                    int pipe_fd = open("/tmp/nda",O_WRONLY,0);
+                    if(pipe_fd <= 0) {
+                        printf("open fifo failed");
+                        break;
+                    }
+                    for(int i=0;i<NUM_ALGO;i++) {
+                        if(pipe_fds[i] == 0) {
+                            pipe_fds[i] = pipe_fd;
+                            break;
+                        }
+                    }
                     int pid = fork();
                     if(pid == 0) {
-                        execl("../../../cpod_c/cpod/build/cmake-build-debug/cpod.exe", "-R", "1.9", "-W", "10000", "-K", "50", "-S", "500", "--num_window=100", "-f", "../../../cpod_c/cpod/build/cmake-build-debug/tao.txt", NULL);
+                        execl("cpod/cpod", "-R", "1.9", "-W", "10000", "-K", "50", "-S", "500", "--num_window=100", "-f", "cpod/tao.txt", NULL);
                         return 0;
                     }
                 } else if(strcmp(control, "ND-B") == 0) {
