@@ -336,7 +336,7 @@ int main(int argc, char const *argv[]) {
                 int pid = fork();
                 if (pid == 0) {
                     execl("nda/cpod", "-R", "1.9", "-W", "10000", "-K", "50", "-S", "500", "--num_window=100", "-f",
-                          "cpod/tao.txt", NULL);
+                          "nda/tao.txt", NULL);
                     return 0;
                 }
             } else if (strcmp(control, "ND-B") == 0) {
