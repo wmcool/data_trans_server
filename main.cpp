@@ -322,6 +322,11 @@ int main(int argc, char const *argv[]) {
                     printf("open error; no reading process\n");
                     return 0;
                 }
+                int pid = fork();
+                if (pid == 0) {
+                    execl("ND-A/cpod", argv[1], NULL);
+                    return 0;
+                }
                 int pipe_fd = open("/tmp/nda", O_WRONLY, 0);
                 if (pipe_fd <= 0) {
                     printf("open fifo failed");
@@ -332,11 +337,6 @@ int main(int argc, char const *argv[]) {
                         pipe_fds[i] = pipe_fd;
                         break;
                     }
-                }
-                int pid = fork();
-                if (pid == 0) {
-                    execl("ND-A/cpod", argv[1], NULL);
-                    return 0;
                 }
             } else if (strcmp(control, "ND-B") == 0) {
 
