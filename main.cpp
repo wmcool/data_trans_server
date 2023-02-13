@@ -221,28 +221,52 @@ int main(int argc, char const *argv[]) {
             int varread = recv(fd2, control, 40, 0);
             if (varread <= 0) continue;
             if (strcmp(control, "FML-A") == 0) {
-                std::cout << "running FML-A.." << std::endl;
+//                // 管道操作
+//                if ((mkfifo("/tmp/fmla", O_CREAT | O_EXCL) < 0) && (errno != EEXIST)) {
+//                    printf("cannot create fifo\n");
+//                    return 0;
+//                }
+//                if (errno == ENXIO) {
+//                    printf("open error; no reading process\n");
+//                    return 0;
+//                }
+//                int pipe_fd = open("/tmp/fmla", O_WRONLY, 0);
+//                if (pipe_fd <= 0) {
+//                    printf("open fifo failed");
+//                    break;
+//                }
+//                for (int i = 0; i < NUM_ALGO; i++) {
+//                    if (pipe_fds[i] == 0) {
+//                        pipe_fds[i] = pipe_fd;
+//                        break;
+//                    }
+//                }
+                int pid = fork();
+                if (pid == 0) {
+                    execl("fmla/api", "-i", "0", NULL);
+                    return 0;
+                }
             } else if (strcmp(control, "FML-B") == 0) {
-                // 管道操作
-                if ((mkfifo("/tmp/fmlb", O_CREAT | O_EXCL) < 0) && (errno != EEXIST)) {
-                    printf("cannot create fifo\n");
-                    return 0;
-                }
-                if (errno == ENXIO) {
-                    printf("open error; no reading process\n");
-                    return 0;
-                }
-                int pipe_fd = open("/tmp/fmlb", O_WRONLY, 0);
-                if (pipe_fd <= 0) {
-                    printf("open fifo failed");
-                    break;
-                }
-                for (int i = 0; i < NUM_ALGO; i++) {
-                    if (pipe_fds[i] == 0) {
-                        pipe_fds[i] = pipe_fd;
-                        break;
-                    }
-                }
+//                // 管道操作
+//                if ((mkfifo("/tmp/fmlb", O_CREAT | O_EXCL) < 0) && (errno != EEXIST)) {
+//                    printf("cannot create fifo\n");
+//                    return 0;
+//                }
+//                if (errno == ENXIO) {
+//                    printf("open error; no reading process\n");
+//                    return 0;
+//                }
+//                int pipe_fd = open("/tmp/fmlb", O_WRONLY, 0);
+//                if (pipe_fd <= 0) {
+//                    printf("open fifo failed");
+//                    break;
+//                }
+//                for (int i = 0; i < NUM_ALGO; i++) {
+//                    if (pipe_fds[i] == 0) {
+//                        pipe_fds[i] = pipe_fd;
+//                        break;
+//                    }
+//                }
                 int pid = fork();
                 if (pid == 0) {
                     execl("fmlb/api", "-h", "0", NULL);
@@ -251,31 +275,35 @@ int main(int argc, char const *argv[]) {
             } else if (strcmp(control, "FML-C") == 0) {
 
             } else if (strcmp(control, "INC-A") == 0) {
-
-            } else if (strcmp(control, "INC-B") == 0) {
-                // 管道操作
-                if ((mkfifo("/tmp/incb", O_CREAT | O_EXCL) < 0) && (errno != EEXIST)) {
-                    printf("cannot create fifo\n");
-                    return 0;
-                }
-                if (errno == ENXIO) {
-                    printf("open error; no reading process\n");
-                    return 0;
-                }
-                int pipe_fd = open("/tmp/incb", O_WRONLY, 0);
-                if (pipe_fd <= 0) {
-                    printf("open fifo failed");
-                    break;
-                }
-                for (int i = 0; i < NUM_ALGO; i++) {
-                    if (pipe_fds[i] == 0) {
-                        pipe_fds[i] = pipe_fd;
-                        break;
-                    }
-                }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("incb/xxx", NULL);
+                    execl("inca/inca.sh", NULL);
+                    return 0;
+                }
+            } else if (strcmp(control, "INC-B") == 0) {
+//                // 管道操作
+//                if ((mkfifo("/tmp/incb", O_CREAT | O_EXCL) < 0) && (errno != EEXIST)) {
+//                    printf("cannot create fifo\n");
+//                    return 0;
+//                }
+//                if (errno == ENXIO) {
+//                    printf("open error; no reading process\n");
+//                    return 0;
+//                }
+//                int pipe_fd = open("/tmp/incb", O_WRONLY, 0);
+//                if (pipe_fd <= 0) {
+//                    printf("open fifo failed");
+//                    break;
+//                }
+//                for (int i = 0; i < NUM_ALGO; i++) {
+//                    if (pipe_fds[i] == 0) {
+//                        pipe_fds[i] = pipe_fd;
+//                        break;
+//                    }
+//                }
+                int pid = fork();
+                if (pid == 0) {
+                    execl("incb/incb.sh", NULL);
                     return 0;
                 }
             } else if (strcmp(control, "INC-C") == 0) {

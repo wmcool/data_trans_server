@@ -7,7 +7,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#define PORT 8888
+#define PORT 8887
 
 #ifndef CLIENT_MYSOCKET_H
 #define CLIENT_MYSOCKET_H
