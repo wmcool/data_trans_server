@@ -7,4 +7,6 @@
 
 int covert2Int(const char* buffer, int i, int j);
 
+long convert2Time(const char* buffer, int i, int j);
+
 #endif //SERVER_UTILS_H

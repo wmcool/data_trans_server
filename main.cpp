@@ -181,7 +181,7 @@ int main(int argc, char const *argv[]) {
             if (varread <= 0) continue;
             printf("%s\n", buffer);
             std::vector<double> data;
-            data.push_back((double) covert2Int(buffer, 138, 154)); // 时间戳
+            long timestamp = convert2Time(buffer, 138, 154);
             data.push_back((double) covert2Int(buffer, 2, 10) / 10); // 土壤传感器数据
             data.push_back((double) covert2Int(buffer, 10, 18) / 10); //多功能传感器的温度
             data.push_back((double) covert2Int(buffer, 18, 26) / 10); //多功能传感器的湿度
@@ -200,6 +200,7 @@ int main(int argc, char const *argv[]) {
             data.push_back((double) covert2Int(buffer, 122, 130) * 5 / 2000); //液位传感器
             data.push_back((double) covert2Int(buffer, 130, 138) * 1.6 / 2000); //液压传感器
             std::stringstream ss;
+            ss << timestamp << ",";
             for (int i = 0; i < data.size(); i++) {
                 ss << data[i];
                 if (i != data.size() - 1) {
