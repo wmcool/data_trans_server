@@ -110,7 +110,7 @@ static int listen_socket(int listen_port, struct sockaddr_in &address) {
 int main(int argc, char const *argv[]) {
     int server_fd1, server_fd2;
     struct sockaddr_in address1, address2;
-    int send_fd = init_socket();
+//    int send_fd = init_socket();
     int addrlen1 = sizeof(address1);
     int addrlen2 = sizeof(address2);
     int pipe_fds[NUM_ALGO];
@@ -216,7 +216,7 @@ int main(int argc, char const *argv[]) {
                     write(pipe_fds[i], s.c_str(), s.size());
                 }
             }
-            send(send_fd, s.c_str(), s.size(), 0);
+//            send(send_fd, s.c_str(), s.size(), 0);
         }
         if (FD_ISSET(fd2, &rd)) {
             // todo 平台控制逻辑
