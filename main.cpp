@@ -245,7 +245,7 @@ int main(int argc, char const *argv[]) {
 //                }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("fmla/api", "-i", "0", NULL);
+                    execl("FML-AB/api", "-i", "0", NULL);
                     return 0;
                 }
             } else if (strcmp(control, "FML-B") == 0) {
@@ -271,7 +271,7 @@ int main(int argc, char const *argv[]) {
 //                }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("fmlb/api", "-h", "0", NULL);
+                    execl("FML-AB/api", "-h", "0", NULL);
                     return 0;
                 }
             } else if (strcmp(control, "FML-C") == 0) {
@@ -335,8 +335,8 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("nda/cpod", "-R", "1.9", "-W", "10000", "-K", "50", "-S", "500", "--num_window=100", "-f",
-                          "nda/tao.txt", NULL);
+                    execl("ND-A/cpod", "-R", "1.9", "-W", "10000", "-K", "50", "-S", "500", "--num_window=100", "-f",
+                          "ND-A/tao.txt", NULL);
                     return 0;
                 }
             } else if (strcmp(control, "ND-B") == 0) {
