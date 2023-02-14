@@ -324,7 +324,7 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("ND-A/cpod", argv[1], NULL);
+                    execl("ND-A/cpod", "-R", "4.0", "-W", "10", "-S", "2", "-K", "2", NULL);
                     return 0;
                 }
                 int pipe_fd = open("/tmp/nda", O_WRONLY, 0);
