@@ -234,7 +234,7 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("FML-AB/apia.sh", NULL);
+                    popen("./apia.sh", "r");
                     return 0;
                 }
                 int pipe_fd = open("/tmp/fmla", O_WRONLY, 0);
@@ -261,7 +261,6 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    popen("ps", "r");
                     popen("./apib.sh", "r");
                     return 0;
                 }
