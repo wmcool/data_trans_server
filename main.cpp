@@ -232,6 +232,11 @@ int main(int argc, char const *argv[]) {
                     printf("open error; no reading process\n");
                     return 0;
                 }
+                int pid = fork();
+                if (pid == 0) {
+                    execl("FML-AB/api", "-i", "0", NULL);
+                    return 0;
+                }
                 int pipe_fd = open("/tmp/fmla", O_WRONLY, 0);
                 if (pipe_fd <= 0) {
                     printf("open fifo failed");
@@ -243,11 +248,7 @@ int main(int argc, char const *argv[]) {
                         break;
                     }
                 }
-                int pid = fork();
-                if (pid == 0) {
-                    execl("FML-AB/api", "-i", "0", NULL);
-                    return 0;
-                }
+
             } else if (strcmp(control, "FML-B") == 0) {
                 // 管道操作
                 if ((mkfifo("/tmp/fmlb", O_CREAT | O_EXCL) < 0) && (errno != EEXIST)) {
@@ -256,6 +257,11 @@ int main(int argc, char const *argv[]) {
                 }
                 if (errno == ENXIO) {
                     printf("open error; no reading process\n");
+                    return 0;
+                }
+                int pid = fork();
+                if (pid == 0) {
+                    execl("FML-AB/api", "-h", "0", NULL);
                     return 0;
                 }
                 int pipe_fd = open("/tmp/fmlb", O_WRONLY, 0);
@@ -268,11 +274,6 @@ int main(int argc, char const *argv[]) {
                         pipe_fds[i] = pipe_fd;
                         break;
                     }
-                }
-                int pid = fork();
-                if (pid == 0) {
-                    execl("FML-AB/api", "-h", "0", NULL);
-                    return 0;
                 }
             } else if (strcmp(control, "FML-C") == 0) {
 
@@ -292,6 +293,11 @@ int main(int argc, char const *argv[]) {
                     printf("open error; no reading process\n");
                     return 0;
                 }
+                int pid = fork();
+                if (pid == 0) {
+                    execl("incb/incb.sh", NULL);
+                    return 0;
+                }
                 int pipe_fd = open("/tmp/incb", O_WRONLY, 0);
                 if (pipe_fd <= 0) {
                     printf("open fifo failed");
@@ -302,11 +308,6 @@ int main(int argc, char const *argv[]) {
                         pipe_fds[i] = pipe_fd;
                         break;
                     }
-                }
-                int pid = fork();
-                if (pid == 0) {
-                    execl("incb/incb.sh", NULL);
-                    return 0;
                 }
             } else if (strcmp(control, "INC-C") == 0) {
 
