@@ -261,7 +261,7 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("FML-AB/apib.sh", NULL);
+                    popen("apib.sh", "r");
                     return 0;
                 }
                 int pipe_fd = open("/tmp/fmlb", O_WRONLY, 0);
