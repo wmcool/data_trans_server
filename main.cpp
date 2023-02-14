@@ -289,7 +289,7 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    popen("./inca.sh", "r");
+                    popen("./inca/inca.sh", "r");
                     return 0;
                 }
                 int pipe_fd = open("/tmp/inca", O_WRONLY, 0);
