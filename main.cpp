@@ -373,7 +373,7 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("ND-C/gau", "tsr", "10", NULL);
+                    execl("ND-C/gau", "10", NULL);
                     return 0;
                 }
                 int pipe_fd = open("/tmp/ndc", O_WRONLY, 0);
