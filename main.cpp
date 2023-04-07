@@ -214,6 +214,7 @@ int main(int argc, char const *argv[]) {
             std::string s = ss.str();
             std::cout << s;
             out << s;
+            out.flush();
             for (int i = 0; i < NUM_ALGO; i++) {
                 if (pipe_fds[i] != 0) {
                     write(pipe_fds[i], s.c_str(), s.size());
