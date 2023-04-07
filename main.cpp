@@ -118,7 +118,7 @@ int main(int argc, char const *argv[]) {
     for (int i = 0; i < NUM_ALGO; i++) {
         pipe_fds[i] = 0;
     }
-    std::fstream out("data.txt");
+    std::fstream out("data.txt", std::ios::out);
     bool flag1 = false;
     bool flag2 = false;
     // 接收传感器数据
