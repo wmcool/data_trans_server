@@ -14,6 +14,7 @@
 #include "vector"
 #include "include/utils.h"
 #include "include/mysocket.h"
+#include "fstream"
 
 #define DATA_PORT 8080
 #define CONTROL_PORT 8081
@@ -117,6 +118,7 @@ int main(int argc, char const *argv[]) {
     for (int i = 0; i < NUM_ALGO; i++) {
         pipe_fds[i] = 0;
     }
+    std::fstream out("data.txt");
     bool flag1 = false;
     bool flag2 = false;
     // 接收传感器数据
@@ -211,6 +213,7 @@ int main(int argc, char const *argv[]) {
             ss << "\n";
             std::string s = ss.str();
             std::cout << s;
+            out << s;
             for (int i = 0; i < NUM_ALGO; i++) {
                 if (pipe_fds[i] != 0) {
                     write(pipe_fds[i], s.c_str(), s.size());
