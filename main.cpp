@@ -217,13 +217,14 @@ int main(int argc, char const *argv[]) {
 //            }
 //            ss << "\n";
 //            std::string s = ss.str();
-            std::cout << s;
+            std::cout << s << std::endl;
             for (int i = 0; i < NUM_ALGO; i++) {
                 if (pipe_fds[i] != 0) {
                     write(pipe_fds[i], s.c_str(), s.size());
                 }
             }
             send(send_fd, s.c_str(), s.size(), 0);
+            sleep(1);
         }
         if (FD_ISSET(fd2, &rd)) {
             // 平台控制逻辑
