@@ -131,6 +131,7 @@ int main(int argc, char const *argv[]) {
     if (server_fd1 == -1 || server_fd2 == -1) {
         exit(EXIT_FAILURE);
     }
+    int fk_fd = open("data24.txt", O_RDONLY);
 
     for (;;) {
         char buffer[158] = {0};
@@ -149,12 +150,13 @@ int main(int argc, char const *argv[]) {
         FD_ZERO(&er);
         FD_SET(server_fd1, &rd);
         FD_SET(server_fd2, &rd);
+        FD_SET(fk_fd, &rd);
         if (flag1)
             FD_SET(fd1, &rd);
         if (flag2)
             FD_SET(fd2, &rd);
 
-        int max_sd = max(server_fd1, max(server_fd2, max(fd1, fd2)));
+        int max_sd = max(server_fd1, max(server_fd2, max(fd1, max(fd2, fk_fd))));
         r = select(max_sd + 1, &rd, &wr, &er, NULL);
         if (r == -1 && errno == EINTR) {
             continue;
@@ -181,7 +183,7 @@ int main(int argc, char const *argv[]) {
             fd2 = new_socket;
             flag2 = true;
         }
-        if (true) {
+        if (FD_ISSET(fk_fd, &rd)) {
 //            int varread = recv(fd1, buffer, 158, 0);
 //            in.read(buffer, 158);
             getline(in, s);
@@ -224,7 +226,7 @@ int main(int argc, char const *argv[]) {
                 }
             }
             send(send_fd, s.c_str(), s.size(), 0);
-            sleep(1);
+//            sleep(1);
         }
         if (FD_ISSET(fd2, &rd)) {
             // 平台控制逻辑
