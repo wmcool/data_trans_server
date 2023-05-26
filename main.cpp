@@ -219,7 +219,10 @@ int main(int argc, char const *argv[]) {
 //            }
 //            ss << "\n";
 //            std::string s = ss.str();
-            std::cout << s << std::endl;
+            std::stringstream ss;
+            ss << s << "\n";
+            s = ss.str();
+            std::cout << s;
             for (int i = 0; i < NUM_ALGO; i++) {
                 if (pipe_fds[i] != 0) {
                     write(pipe_fds[i], s.c_str(), s.size());
