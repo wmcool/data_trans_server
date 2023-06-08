@@ -134,14 +134,12 @@ int main(int argc, char const *argv[]) {
     int fk_fd = open("data24.txt", O_RDONLY);
 
     for (;;) {
-        char buffer[158] = {0};
         std::string s;
         char control[40] = {0};
         bool algos[NUM_ALGO];
         for (int i = 0; i < NUM_ALGO; i++) {
             algos[i] = false;
         }
-//        char buffer[159] = "00000000C5000000C20000015A0000002200000B7C000000000000000000000000000000000000000000000F8DO0000BDA00002812000008ED000000000000000000000000000001863447D7F71BAA";
         int r = 0;
         fd_set rd, wr, er;
 
@@ -184,41 +182,7 @@ int main(int argc, char const *argv[]) {
             flag2 = true;
         }
         if (FD_ISSET(fk_fd, &rd)) {
-//            int varread = recv(fd1, buffer, 158, 0);
-//            in.read(buffer, 158);
             getline(in, s);
-//            if (varread <= 0) continue;
-
-//            printf("%s\n", buffer);
-//            std::vector<double> data;
-//            long timestamp = convert2Time(buffer, 138, 154);
-//            data.push_back((double) covert2Int(buffer, 2, 10) / 10); // 土壤传感器数据
-//            data.push_back((double) covert2Int(buffer, 10, 18) / 10); //多功能传感器的温度
-//            data.push_back((double) covert2Int(buffer, 18, 26) / 10); //多功能传感器的湿度
-//            data.push_back((double) covert2Int(buffer, 26, 34) / 10); //多功能传感器的粉尘
-//            data.push_back((double) covert2Int(buffer, 34, 42) / 10); //多功能传感器的VOC
-//            data.push_back((double) covert2Int(buffer, 42, 50) / 10); //多功能传感器的硫化氢
-//            data.push_back((double) covert2Int(buffer, 50, 58) / 10); //多功能传感器的氨气
-//            data.push_back((double) covert2Int(buffer, 58, 66) / 10); //多功能传感器的甲醛
-//            data.push_back((double) covert2Int(buffer, 66, 74) / 10); //多功能传感器的甲烷
-//            data.push_back((double) covert2Int(buffer, 74, 82) / 10); //多功能传感器的氧气
-//            data.push_back((double) (covert2Int(buffer, 82, 90) - 2000) / 100); //环境变送器温度
-//            data.push_back((double) covert2Int(buffer, 90, 98) / 100); //环境变送器湿度
-//            data.push_back((double) covert2Int(buffer, 98, 106) * 10); //环境变送器大气压
-//            data.push_back((double) covert2Int(buffer, 106, 114) / 10); //co2传感器浓度
-//            data.push_back((double) covert2Int(buffer, 114, 122) / 100); //风速传感器
-//            data.push_back((double) covert2Int(buffer, 122, 130) * 5 / 2000); //液位传感器
-//            data.push_back((double) covert2Int(buffer, 130, 138) * 1.6 / 2000); //液压传感器
-//            std::stringstream ss;
-//            ss << timestamp << ",";
-//            for (int i = 0; i < data.size(); i++) {
-//                ss << data[i];
-//                if (i != data.size() - 1) {
-//                    ss << ",";
-//                }
-//            }
-//            ss << "\n";
-//            std::string s = ss.str();
             std::stringstream ss;
             ss << s << "\n";
             s = ss.str();
@@ -229,7 +193,6 @@ int main(int argc, char const *argv[]) {
                 }
             }
             send(send_fd, s.c_str(), s.size(), 0);
-//            sleep(1);
         }
         if (FD_ISSET(fd2, &rd)) {
             // 平台控制逻辑
@@ -413,6 +376,6 @@ int main(int argc, char const *argv[]) {
             }
             printf("%s\n", control);
         }
-        sleep(1);
+//        sleep(1);
     }
 }
