@@ -183,6 +183,10 @@ int main(int argc, char const *argv[]) {
         }
         if (FD_ISSET(fk_fd, &rd)) {
             getline(in, s);
+            if(s.empty()) {
+                std::cout << "end of file!" << std::endl;
+                return 0;
+            }
             std::stringstream ss;
             ss << s << "\n";
             s = ss.str();
