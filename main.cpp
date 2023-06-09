@@ -16,13 +16,10 @@
 #include "include/mysocket.h"
 #include "fstream"
 #include <signal.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 #define DATA_PORT 8080
 #define CONTROL_PORT 8081
 #define NUM_ALGO 15
-#define _GNU_SOURCE
 
 #undef max
 #define max(x, y) ((x) > (y) ? (x) : (y))
@@ -200,14 +197,19 @@ int main(int argc, char const *argv[]) {
             std::cout << s;
             for (int i = 0; i < NUM_ALGO; i++) {
                 if (pipe_fds[i] != 0) {
-                    int wtf = write(pipe_fds[i], s.c_str(), s.size());
-                    if(wtf <= 0) {
-                        printf("write pipe failed");
-                        return 0;
+                    ssize_t n = write(pipe_fds[i], s.c_str(), s.size());
+                    if (n == -1) {
+                        if (errno == EPIPE) {
+                            printf("reader closed");
+                        } else if (errno == EAGAIN) {
+                            printf("pipe buffer overflow");
+                        } else {
+                            printf("other bug");
+                        }
                     }
                 }
             }
-            int sdf = send(send_fd, s.c_str(), s.size(), 0);
+            ssize_t sdf = send(send_fd, s.c_str(), s.size(), 0);
             if(sdf <= 0) {
                 printf("send data failed");
                 return 0;
@@ -237,11 +239,6 @@ int main(int argc, char const *argv[]) {
                     printf("open fifo failed");
                     break;
                 }
-                int ret = fcntl(pipe_fd, F_SETPIPE_SZ, 409600);
-                if (ret == -1) {
-                    perror("fcntl");
-                    exit(1);
-                }
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
                         pipe_fds[i] = pipe_fd;
@@ -268,11 +265,6 @@ int main(int argc, char const *argv[]) {
                 if (pipe_fd <= 0) {
                     printf("open fifo failed");
                     break;
-                }
-                int ret = fcntl(pipe_fd, F_SETPIPE_SZ, 409600);
-                if (ret == -1) {
-                    perror("fcntl");
-                    exit(1);
                 }
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
@@ -302,11 +294,6 @@ int main(int argc, char const *argv[]) {
                     printf("open fifo failed");
                     break;
                 }
-                int ret = fcntl(pipe_fd, F_SETPIPE_SZ, 409600);
-                if (ret == -1) {
-                    perror("fcntl");
-                    exit(1);
-                }
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
                         pipe_fds[i] = pipe_fd;
@@ -332,11 +319,6 @@ int main(int argc, char const *argv[]) {
                 if (pipe_fd <= 0) {
                     printf("open fifo failed");
                     break;
-                }
-                int ret = fcntl(pipe_fd, F_SETPIPE_SZ, 409600);
-                if (ret == -1) {
-                    perror("fcntl");
-                    exit(1);
                 }
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
@@ -368,11 +350,6 @@ int main(int argc, char const *argv[]) {
                     printf("open fifo failed");
                     break;
                 }
-                int ret = fcntl(pipe_fd, F_SETPIPE_SZ, 409600);
-                if (ret == -1) {
-                    perror("fcntl");
-                    exit(1);
-                }
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
                         pipe_fds[i] = pipe_fd;
@@ -400,11 +377,6 @@ int main(int argc, char const *argv[]) {
                 if (pipe_fd <= 0) {
                     printf("open fifo failed");
                     break;
-                }
-                int ret = fcntl(pipe_fd, F_SETPIPE_SZ, 409600);
-                if (ret == -1) {
-                    perror("fcntl");
-                    exit(1);
                 }
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
