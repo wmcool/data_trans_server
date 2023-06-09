@@ -348,7 +348,8 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("ND-A/cpod", "-R", "4.0", "-W", "10", "-S", "2", "-K", "2", NULL);
+//                    execl("ND-A/cpod", "-R", "4.0", "-W", "10", "-S", "2", "-K", "2", NULL);
+                    popen("./nda.sh", "r");
                     return 0;
                 }
                 int pipe_fd = open("/tmp/nda", O_WRONLY, 0);
@@ -377,7 +378,8 @@ int main(int argc, char const *argv[]) {
                 }
                 int pid = fork();
                 if (pid == 0) {
-                    execl("ND-C/gau", NULL);
+//                    execl("ND-C/gau", NULL);
+                    popen("./ndc.sh", "r");
                     return 0;
                 }
                 int pipe_fd = open("/tmp/ndc", O_WRONLY, 0);
