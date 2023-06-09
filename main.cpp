@@ -193,10 +193,18 @@ int main(int argc, char const *argv[]) {
             std::cout << s;
             for (int i = 0; i < NUM_ALGO; i++) {
                 if (pipe_fds[i] != 0) {
-                    write(pipe_fds[i], s.c_str(), s.size());
+                    int wtf = write(pipe_fds[i], s.c_str(), s.size());
+                    if(wtf <= 0) {
+                        printf("write pipe failed");
+                        return 0;
+                    }
                 }
             }
-            send(send_fd, s.c_str(), s.size(), 0);
+            int ret = send(send_fd, s.c_str(), s.size(), 0);
+            if(ret <= 0) {
+                printf("send data failed");
+                return 0;
+            }
         }
         if (FD_ISSET(fd2, &rd)) {
             // 平台控制逻辑
