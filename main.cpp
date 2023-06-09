@@ -16,6 +16,7 @@
 #include "include/mysocket.h"
 #include "fstream"
 #include <signal.h>
+#include "unordered_map"
 
 #define DATA_PORT 8080
 #define CONTROL_PORT 8081
@@ -119,6 +120,7 @@ int main(int argc, char const *argv[]) {
     int addrlen2 = sizeof(address2);
     signal(SIGPIPE, handle_pipe);
     int pipe_fds[NUM_ALGO];
+    std::unordered_map<int,std::string> fd2name;
     for (int i = 0; i < NUM_ALGO; i++) {
         pipe_fds[i] = 0;
     }
@@ -200,7 +202,7 @@ int main(int argc, char const *argv[]) {
                     ssize_t n = write(pipe_fds[i], s.c_str(), s.size());
                     if (n == -1) {
                         if (errno == EPIPE) {
-                            printf("reader closed");
+                            std::cout << "reader closed algo name: " << fd2name[pipe_fds[i]] << std::endl;
                         } else if (errno == EAGAIN) {
                             printf("pipe buffer overflow");
                         } else {
@@ -235,6 +237,7 @@ int main(int argc, char const *argv[]) {
                     return 0;
                 }
                 int pipe_fd = open("/tmp/fmla", O_WRONLY, 0);
+                fd2name[pipe_fd] = "FML-A";
                 if (pipe_fd <= 0) {
                     printf("open fifo failed");
                     break;
@@ -266,6 +269,7 @@ int main(int argc, char const *argv[]) {
                     printf("open fifo failed");
                     break;
                 }
+                fd2name[pipe_fd] = "FML-B";
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
                         pipe_fds[i] = pipe_fd;
@@ -294,6 +298,7 @@ int main(int argc, char const *argv[]) {
                     printf("open fifo failed");
                     break;
                 }
+                fd2name[pipe_fd] = "INC-A";
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
                         pipe_fds[i] = pipe_fd;
@@ -320,6 +325,7 @@ int main(int argc, char const *argv[]) {
                     printf("open fifo failed");
                     break;
                 }
+                fd2name[pipe_fd] = "INC-B";
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
                         pipe_fds[i] = pipe_fd;
@@ -350,6 +356,7 @@ int main(int argc, char const *argv[]) {
                     printf("open fifo failed");
                     break;
                 }
+                fd2name[pipe_fd] = "ND-A";
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
                         pipe_fds[i] = pipe_fd;
@@ -378,6 +385,7 @@ int main(int argc, char const *argv[]) {
                     printf("open fifo failed");
                     break;
                 }
+                fd2name[pipe_fd] = "ND-C";
                 for (int i = 0; i < NUM_ALGO; i++) {
                     if (pipe_fds[i] == 0) {
                         pipe_fds[i] = pipe_fd;
