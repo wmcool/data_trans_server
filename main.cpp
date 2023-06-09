@@ -15,6 +15,7 @@
 #include "include/utils.h"
 #include "include/mysocket.h"
 #include "fstream"
+#include <signal.h>
 
 #define DATA_PORT 8080
 #define CONTROL_PORT 8081
@@ -72,7 +73,9 @@
                         }                          \
                         }                          \
 
-
+void handle_pipe(int sig) {
+    printf("pipe error!");
+}
 static int listen_socket(int listen_port, struct sockaddr_in &address) {
     int server_fd;
     int opt = 1;
@@ -114,6 +117,7 @@ int main(int argc, char const *argv[]) {
     int send_fd = init_socket();
     int addrlen1 = sizeof(address1);
     int addrlen2 = sizeof(address2);
+    signal(SIGPIPE, handle_pipe);
     int pipe_fds[NUM_ALGO];
     for (int i = 0; i < NUM_ALGO; i++) {
         pipe_fds[i] = 0;
