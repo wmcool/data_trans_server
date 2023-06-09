@@ -384,6 +384,6 @@ int main(int argc, char const *argv[]) {
             }
             printf("%s\n", control);
         }
-//        sleep(1);
+        sleep(1);
     }
 }
