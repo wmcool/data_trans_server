@@ -200,7 +200,11 @@ int main(int argc, char const *argv[]) {
                     }
                 }
             }
-            send(send_fd, s.c_str(), s.size(), 0);
+            int sdf = send(send_fd, s.c_str(), s.size(), 0);
+            if(sdf <= 0) {
+                printf("send data failed");
+                return 0;
+            }
         }
         if (FD_ISSET(fd2, &rd)) {
             // 平台控制逻辑
